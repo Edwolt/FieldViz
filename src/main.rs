@@ -62,18 +62,12 @@ impl App {
             // Clear the screen
             clear(BACK, gl);
 
-            let new_points: Vec<_> = self
-                .points
-                .iter()
-                .map(|&(x, y)| (self.field)(x, y))
-                .collect();
-
+            let transform = c.transform.scale(SIZE.0 as f64, SIZE.1 as f64)
             self.points
                 .iter()
-                .zip(new_points.iter())
-                .for_each(|(&(x0, y0), &(x1, y1))| {
-                    line(RED, 5.0, [x0, y0, x0 + x1, y0 + y1], c.transform, gl)
-                })
+                .map(|&(x, y)| (x, y, (self.field)(x, y).0, (self.field)(x, y).1))
+                .map(|(x0, y0, x1, y1)| (x0, y0, x0 + x1, y0 + y1))
+                .for_each(|(x0, y0, x1, y1)| line(RED, 0.01, [x0, y0, x1, y1], transform, gl));
         });
     }
 
