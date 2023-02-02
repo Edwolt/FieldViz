@@ -9,7 +9,9 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 
-const SIZE: (u32,u32) = (800, 800);
+const SIZE: (u32, u32) = (800, 800);
+
+type Field = fn(x: f64, y: f64) -> (f64, f64);
 
 fn main() {
     // Change this to OpenGL::V2_1 if not working
@@ -23,10 +25,7 @@ fn main() {
         .unwrap();
 
     // Create a new visualization and run it
-    let mut app = App {
-        gl: GlGraphics::new(opengl),
-    };
-
+    let mut app = App::new(GlGraphics::new(opengl), |_, _| (1.0, 0.0));
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
@@ -40,18 +39,41 @@ fn main() {
 }
 
 pub struct App {
+    field: Field,   // Field to visualize
     gl: GlGraphics, // OpenGL drawing backend
+    points: Vec<(f64, f64)>,
 }
 
 impl App {
+    fn new(gl: GlGraphics, field: Field) -> App {
+        App {
+            field,
+            gl,
+            points: (0..100).map(|_| (rand::random(), rand::random())).collect(),
+        }
+    }
+
     fn render(&mut self, args: &RenderArgs) {
-        use graphics::*;
-
         const BACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
-        self.gl.draw(args.viewport(), |_c, gl| {
+        self.gl.draw(args.viewport(), |c, gl| {
+            use graphics::*;
             // Clear the screen
             clear(BACK, gl);
+
+            let new_points: Vec<_> = self
+                .points
+                .iter()
+                .map(|&(x, y)| (self.field)(x, y))
+                .collect();
+
+            self.points
+                .iter()
+                .zip(new_points.iter())
+                .for_each(|(&(x0, y0), &(x1, y1))| {
+                    line(RED, 5.0, [x0, y0, x0 + x1, y0 + y1], c.transform, gl)
+                })
         });
     }
 
