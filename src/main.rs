@@ -1,4 +1,4 @@
-mod limited_list;
+mod history;
 
 extern crate glutin_window;
 extern crate graphics;
@@ -11,7 +11,7 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 
-use limited_list::LimitedList;
+use history::History;
 
 const SIZE: (u32, u32) = (500, 500);
 
@@ -45,7 +45,7 @@ fn main() {
 pub struct App {
     field: Field,   // Field to visualize
     gl: GlGraphics, // OpenGL drawing backend
-    history: LimitedList<(f64, f64), 50>>,
+    history: History<(f64, f64), 50>>,
 }
 
 impl App {
@@ -54,7 +54,7 @@ impl App {
             field,
             gl,
             history: Vec::from_iter((0..100).map(|_| {
-                let mut l = LimitedList::new();
+                let mut l = History::new();
                 l.push((
                     rand::random::<f64>() * 2.0 - 1.0,
                     rand::random::<f64>() * 2.0 - 1.0,
@@ -96,8 +96,11 @@ impl App {
     }
 
     fn update(&mut self, _args: &UpdateArgs) {
-        // TODO
-        let points = self.history.last();
-        let new_points = self.
+        let dt = _args.dt;
+        for p in self.history.iter_mut() {
+            let &(x, y) = p.last().unwrap();
+            let (dx, dy) = (self.field)(*x, *y);
+            p.push((x + dx* dt, y + dy*dt));
+        }
     }
 }
