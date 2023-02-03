@@ -45,7 +45,7 @@ fn main() {
 pub struct App {
     field: Field,   // Field to visualize
     gl: GlGraphics, // OpenGL drawing backend
-    history: History<(f64, f64), 50>>,
+    history: Vec<History<(f64, f64), 50>>,
 }
 
 impl App {
@@ -82,7 +82,8 @@ impl App {
                 .scale(0.5, -0.5)
                 .trans(1.0, -1.0);
 
-            self.history.last
+            self.history
+                .last()
                 .iter()
                 .map(|&(x, y)| (x, y, (self.field)(x, y).0, (self.field)(x, y).1))
                 .map(|(x0, y0, x1, y1)| (x0, y0, x0 + x1, y0 + y1))
@@ -99,8 +100,8 @@ impl App {
         let dt = _args.dt;
         for p in self.history.iter_mut() {
             let &(x, y) = p.last().unwrap();
-            let (dx, dy) = (self.field)(*x, *y);
-            p.push((x + dx* dt, y + dy*dt));
+            let (dx, dy) = (self.field)(x, y);
+            p.push((x + dx * dt, y + dy * dt));
         }
     }
 }
