@@ -49,7 +49,14 @@ impl App {
         App {
             field,
             gl,
-            points: (0..100).map(|_| (rand::random(), rand::random())).collect(),
+            points: (0..100)
+                .map(|_| {
+                    (
+                        rand::random::<f64>() * 2.0 - 1.0,
+                        rand::random::<f64>() * 2.0 - 1.0,
+                    )
+                })
+                .collect(),
         }
     }
 
@@ -62,7 +69,10 @@ impl App {
             // Clear the screen
             clear(BACK, gl);
 
-            let transform = c.transform.trans(0.5, 0.5).scale(SIZE.0 as f64, SIZE.1 as f64);
+            let transform = c
+                .transform
+                .trans(0.5, 0.5)
+                .scale(SIZE.0 as f64, SIZE.1 as f64);
 
             self.points
                 .iter()
