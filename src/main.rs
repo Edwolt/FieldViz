@@ -1,3 +1,5 @@
+mod limited_list;
+
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
@@ -9,7 +11,9 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 
-const SIZE: (u32, u32) = (800, 800);
+use limited_list::LimitedList;
+
+const SIZE: (u32, u32) = (500, 500);
 
 type Field = fn(x: f64, y: f64) -> (f64, f64);
 
@@ -41,7 +45,7 @@ fn main() {
 pub struct App {
     field: Field,   // Field to visualize
     gl: GlGraphics, // OpenGL drawing backend
-    points: Vec<(f64, f64)>,
+    history: LimitedList<(f64, f64), 50>>,
 }
 
 impl App {
@@ -49,20 +53,23 @@ impl App {
         App {
             field,
             gl,
-            points: (0..100)
-                .map(|_| {
-                    (
-                        rand::random::<f64>() * 2.0 - 1.0,
-                        rand::random::<f64>() * 2.0 - 1.0,
-                    )
-                })
-                .collect(),
+            history: Vec::from_iter((0..100).map(|_| {
+                let mut l = LimitedList::new();
+                l.push((
+                    rand::random::<f64>() * 2.0 - 1.0,
+                    rand::random::<f64>() * 2.0 - 1.0,
+                ));
+                l
+            })),
         }
     }
 
     fn render(&mut self, args: &RenderArgs) {
         const BACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+        const RADIUS: f64 = 0.005;
 
         self.gl.draw(args.viewport(), |c, gl| {
             use graphics::*;
@@ -71,18 +78,26 @@ impl App {
 
             let transform = c
                 .transform
-                .trans(0.5, 0.5)
-                .scale(SIZE.0 as f64, SIZE.1 as f64);
+                .scale(SIZE.0 as f64, SIZE.1 as f64)
+                .scale(0.5, -0.5)
+                .trans(1.0, -1.0);
 
-            self.points
+            self.history.last
                 .iter()
                 .map(|&(x, y)| (x, y, (self.field)(x, y).0, (self.field)(x, y).1))
                 .map(|(x0, y0, x1, y1)| (x0, y0, x0 + x1, y0 + y1))
-                .for_each(|(x0, y0, x1, y1)| line(RED, 0.001, [x0, y0, x1, y1], transform, gl));
+                .for_each(|(x0, y0, x1, y1)| line(RED, RADIUS, [x0, y0, x1, y1], transform, gl));
+
+            line(RED, RADIUS, [0.0, 0.0, 1.0, 0.0], transform, gl);
+            line(GREEN, RADIUS, [0.0, 0.0, 0.0, 1.0], transform, gl);
+            line(BLUE, RADIUS, [1.0, 0.0, 1.0, 1.0], transform, gl);
+            line(BLUE, RADIUS, [0.0, 1.0, 1.0, 1.0], transform, gl);
         });
     }
 
     fn update(&mut self, _args: &UpdateArgs) {
         // TODO
+        let points = self.history.last();
+        let new_points = self.
     }
 }
