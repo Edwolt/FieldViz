@@ -105,3 +105,12 @@ impl App {
         }
     }
 }
+
+fn iterate_over_histories<const N: usize>(
+    histories: Vec<History<(f64, f64), N>>,
+) -> Iterator<Item = ((f64, f64, f64), (f64, f64, f64))> {
+    let iterators: Vec<_> = histories
+        .iter()
+        .map(|h| h.iter().rev().windows(2))
+        .collect();
+}
