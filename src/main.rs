@@ -29,7 +29,10 @@ fn main() {
         .unwrap();
 
     // Create a new visualization and run it
-    let mut app = App::new(GlGraphics::new(opengl), |x, y| (y, x));
+    // let field: Fiedl = |_x, _y| (1.0, 0.0);
+    let field: Field = |x, y| (y, x);
+    // let field: Field = |x, y| (y/(x*x+y*y).sqrt(), -x/(x*x+y*y).sqrt());
+    let mut app = App::new(GlGraphics::new(opengl), field);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
