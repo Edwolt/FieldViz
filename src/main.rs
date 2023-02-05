@@ -29,7 +29,7 @@ fn main() {
         .unwrap();
 
     // Create a new visualization and run it
-    let mut app = App::new(GlGraphics::new(opengl), |_, _| (1.0, 0.0));
+    let mut app = App::new(GlGraphics::new(opengl), |x, y| (y, x));
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
@@ -54,12 +54,12 @@ impl App {
             field,
             gl,
             history: Vec::from_iter((0..100).map(|_| {
-                let mut l = History::new();
-                l.push((
+                let mut h = History::new();
+                h.push((
                     rand::random::<f64>() * 2.0 - 1.0,
                     rand::random::<f64>() * 2.0 - 1.0,
                 ));
-                l
+                h
             })),
         }
     }
@@ -82,20 +82,31 @@ impl App {
                 .scale(0.5, -0.5)
                 .trans(1.0, -1.0);
 
-            let iterators: Vec<_> = self.history
-                .iter()
-                .map(|h| h.iter().rev().windows(2).map(|w| (w[1], w[0])).fuse()).collect();
+            // TODO Draw from the oldest to the newest
+            // let iterators: Vec<_> = self.history
+            //     .iter()
+            //     .map(|h| h.iter().rev().windows(2).map(|w| (w[1], w[0])).fuse()).collect();
+            //
+            // loop {
+            //     let ok: bool = false;
+            //     for i in iterators {
+            //         if let Some((x0, y0), (x1, y1)) = i.next() {
+            //             ok = true;
+            //             line(RED, RADIUS, [x0, y0, x1, y1], transform, gl);
+            //         }
+            //     }
+            //     if !ok {
+            //         break;
+            //     }
+            // }
 
-            loop {
-                let ok: bool = false;
-                for i in iterators {
-                    if let Some((x0, y0), (x1, y1)) = i.next() {
-                        ok = true;
-                        line(RED, RADIUS, [x0, y0, x1, y1], transform, gl);
-                    }
-                }
-                if !ok {
-                    break;
+            // TODO it's rendering non-valid points
+            for h in self.history.iter() {
+                let &(mut x0, mut y0) = h.iter().next().unwrap();
+                for &(x1, y1) in h.iter() {
+                    line(RED, RADIUS, [x0, y0, x1, y1], transform, gl);
+                    x0 = x1;
+                    y0 = y1;
                 }
             }
         });
