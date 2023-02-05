@@ -1,4 +1,4 @@
-# Field Vizualization
+# Vector Field Vizualization
 
 A program that let you visualize a vector field
 (a math function that have a vector as input
