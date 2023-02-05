@@ -23,7 +23,7 @@ impl<T: Default + Copy, const N: usize> History<T, N> {
         self.idx = (self.idx + 1) % N;
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> {
         self.data.iter().cycle().skip(self.idx).take(self.size())
     }
 

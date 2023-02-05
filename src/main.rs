@@ -82,17 +82,22 @@ impl App {
                 .scale(0.5, -0.5)
                 .trans(1.0, -1.0);
 
-            self.history
-                .last()
+            let iterators: Vec<_> = self.history
                 .iter()
-                .map(|&(x, y)| (x, y, (self.field)(x, y).0, (self.field)(x, y).1))
-                .map(|(x0, y0, x1, y1)| (x0, y0, x0 + x1, y0 + y1))
-                .for_each(|(x0, y0, x1, y1)| line(RED, RADIUS, [x0, y0, x1, y1], transform, gl));
+                .map(|h| h.iter().rev().windows(2).map(|w| (w[1], w[0])).fuse()).collect();
 
-            line(RED, RADIUS, [0.0, 0.0, 1.0, 0.0], transform, gl);
-            line(GREEN, RADIUS, [0.0, 0.0, 0.0, 1.0], transform, gl);
-            line(BLUE, RADIUS, [1.0, 0.0, 1.0, 1.0], transform, gl);
-            line(BLUE, RADIUS, [0.0, 1.0, 1.0, 1.0], transform, gl);
+            loop {
+                let ok: bool = false;
+                for i in iterators {
+                    if let Some((x0, y0), (x1, y1)) = i.next() {
+                        ok = true;
+                        line(RED, RADIUS, [x0, y0, x1, y1], transform, gl);
+                    }
+                }
+                if !ok {
+                    break;
+                }
+            }
         });
     }
 
@@ -104,13 +109,4 @@ impl App {
             p.push((x + dx * dt, y + dy * dt));
         }
     }
-}
-
-fn iterate_over_histories<const N: usize>(
-    histories: Vec<History<(f64, f64), N>>,
-) -> Iterator<Item = ((f64, f64, f64), (f64, f64, f64))> {
-    let iterators: Vec<_> = histories
-        .iter()
-        .map(|h| h.iter().rev().windows(2))
-        .collect();
 }
