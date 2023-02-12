@@ -48,7 +48,7 @@ fn main() {
 pub struct App {
     field: Field,   // Field to visualize
     gl: GlGraphics, // OpenGL drawing backend
-    history: Vec<History<(f64, f64), 50>>,
+    history: History<50>,
 }
 
 impl App {
@@ -117,7 +117,7 @@ impl App {
 
     fn update(&mut self, _args: &UpdateArgs) {
         let dt = _args.dt;
-        for p in self.history.iter_mut() {
+        for p in self.history.data.iter_mut() {
             let &(x, y) = p.last().unwrap();
             let (dx, dy) = (self.field)(x, y);
             p.push((x + dx * dt, y + dy * dt));

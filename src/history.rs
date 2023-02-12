@@ -1,37 +1,112 @@
-pub struct History<T, const N: usize> {
-    data: [T; N],
-    pub time: usize, // TODO make private
-    idx: usize,
+use rand::random;
+
+pub struct Particle<const N: usize> {
+    data: [(f64, f64); N],
+    time: usize,
+    base: usize,
 }
 
-impl<T: Default + Copy, const N: usize> History<T, N> {
+impl<const N: usize> Particle<N> {
     pub fn new() -> Self {
         Self {
-            data: [T::default(); N],
+            data: [(0.0, 0.0); N],
             time: 0,
-            idx: 0,
+            base: 0,
         }
     }
 
+    /// Create a random particle
+    pub fn random() -> Self {
+        let mut this = Self::new();
+        this.push((random(), random()));
+        this
+    }
+
+    /// Create a random particle
     fn size(&self) -> usize {
-        self.time.min(N)
+        self.time.max(N)
     }
 
-    pub fn push(&mut self, value: T) {
-        self.data[self.idx] = value;
+    fn idx(&self) -> usize {
+        (self.base + self.size()) % N
+    }
+
+    pub fn push(&mut self, value: (f64, f64)) {
+        self.data[self.idx()] = value;
         self.time += 1;
-        self.idx = (self.idx + 1) % N;
+        if self.time >= N {
+            self.base = (self.base + 1) % N;
+        }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        self.data.iter().cycle().skip(self.idx).take(self.size())
+    pub fn iter(&self) -> impl Iterator<Item = &(f64, f64)> {
+        self.data.iter().cycle().skip(self.base).take(self.size())
     }
 
-    pub fn last(&self) -> Option<&T> {
-        if self.size() == 0 {
-            None
+    pub fn nth(&self, n: usize) -> Option<(f64, f64)> {
+        if n <= self.size() {
+            Some(self.data[(self.idx() + n) % N])
         } else {
-            Some(&self.data[(self.idx + N - 1) % N])
+            None
+        }
+    }
+}
+
+pub struct History<const N: usize> {
+    data: Vec<Particle<N>>,
+}
+
+impl<const N: usize> History<N> {
+    pub fn new() -> Self {
+        Self { data: Vec::new() }
+    }
+
+    // Insert a new particle in history with a random position
+    pub fn spawn(&mut self) {
+        self.data.push(Particle::<N>::random());
+    }
+
+    pub fn push(&mut self, pos: (f64, f64)) {
+        if self.data.is_empty() {
+            self.data.push(Particle::new());
+        }
+        self.data.last_mut().unwrap().push(pos);
+    }
+
+    /// Go the history by generation (Iterators with the same time)
+    pub fn gen_iter(&self) -> impl Iterator<Item = Vec<&Particle<N>>> {
+        HistoryIterator {
+            history: self,
+            i: 0,
+        }
+    }
+
+    pub fn data_iter_mut(&mut self) -> impl Iterator<Item = &mut Particle<N>> {
+        self.data.iter_mut()
+    }
+}
+
+// History Iterator
+struct HistoryIterator<'a, const N: usize> {
+    history: &'a History<N>,
+    i: usize,
+}
+
+impl<'a, const N: usize> Iterator for HistoryIterator<'a, N> {
+    type Item = Vec<&'a Particle<N>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < N {
+            let item = self
+                .history
+                .data
+                .iter()
+                .filter_map(|particle| particle.nth(self.i))
+                .collect();
+
+            Some(item)
+        } else {
+            None
         }
     }
 }
