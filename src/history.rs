@@ -45,7 +45,15 @@ impl<const N: usize> Particle<N> {
 
     pub fn nth(&self, n: usize) -> Option<(f64, f64)> {
         if n <= self.size() {
-            Some(self.data[(self.idx() + n) % N])
+            Some(self.data[(self.base + n) % N])
+        } else {
+            None
+        }
+    }
+
+    pub fn last(&self) -> Option<(f64, f64)> {
+        if self.size() != 0 {
+            Some(self.data[self.idx() - 1])
         } else {
             None
         }
@@ -74,7 +82,7 @@ impl<const N: usize> History<N> {
     }
 
     /// Go the history by generation (Iterators with the same time)
-    pub fn gen_iter(&self) -> impl Iterator<Item = Vec<&Particle<N>>> {
+    pub fn gen_iter<'a>(&'a self) -> impl Iterator<Item = Vec<[f64; 4]>> + 'a {
         HistoryIterator {
             history: self,
             i: 0,
@@ -93,15 +101,20 @@ struct HistoryIterator<'a, const N: usize> {
 }
 
 impl<'a, const N: usize> Iterator for HistoryIterator<'a, N> {
-    type Item = Vec<&'a Particle<N>>;
+    type Item = Vec<[f64; 4]>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.i < N {
+        if self.i + 1 < N {
             let item = self
                 .history
                 .data
                 .iter()
-                .filter_map(|particle| particle.nth(self.i))
+                .filter_map(
+                    |particle| match (particle.nth(self.i), particle.nth(self.i + 1)) {
+                        (Some((x0, y0)), Some((x1, y1))) => Some([x0, y0, x1, y1]),
+                        _ => None,
+                    },
+                )
                 .collect();
 
             Some(item)

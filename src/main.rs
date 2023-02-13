@@ -35,13 +35,16 @@ fn main() {
     let mut app = App::new(GlGraphics::new(opengl), field);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
+        println!("render");
         if let Some(args) = e.render_args() {
             app.render(&args);
         }
 
+        println!("update");
         if let Some(args) = e.update_args() {
             app.update(&args);
         }
+        println!("ok");
     }
 }
 
@@ -53,18 +56,12 @@ pub struct App {
 
 impl App {
     fn new(gl: GlGraphics, field: Field) -> App {
-        App {
-            field,
-            gl,
-            history: Vec::from_iter((0..100).map(|_| {
-                let mut h = History::new();
-                h.push((
-                    rand::random::<f64>() * 2.0 - 1.0,
-                    rand::random::<f64>() * 2.0 - 1.0,
-                ));
-                h
-            })),
+        let mut history = History::new();
+        for _ in 0..100 {
+            history.spawn();
         }
+
+        App { field, gl, history }
     }
 
     fn render(&mut self, args: &RenderArgs) {
@@ -104,12 +101,9 @@ impl App {
             // }
 
             // TODO it's rendering non-valid points
-            for h in self.history.iter() {
-                let &(mut x0, mut y0) = h.iter().next().unwrap();
-                for &(x1, y1) in h.iter() {
-                    line(RED, RADIUS, [x0, y0, x1, y1], transform, gl);
-                    x0 = x1;
-                    y0 = y1;
+            for gen in self.history.gen_iter() {
+                for l in gen {
+                    line(RED, RADIUS, l, transform, gl);
                 }
             }
         });
@@ -117,8 +111,8 @@ impl App {
 
     fn update(&mut self, _args: &UpdateArgs) {
         let dt = _args.dt;
-        for p in self.history.data.iter_mut() {
-            let &(x, y) = p.last().unwrap();
+        for p in self.history.data_iter_mut() {
+            let (x, y) = p.last().unwrap();
             let (dx, dy) = (self.field)(x, y);
             p.push((x + dx * dt, y + dy * dt));
         }
