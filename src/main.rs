@@ -101,7 +101,8 @@ impl App {
             // }
 
             // TODO it's rendering non-valid points
-            for gen in self.history.gen_iter() {
+            for (i, gen) in self.history.gen_iter().enumerate() {
+                println!("{}", i);
                 for l in gen {
                     line(RED, RADIUS, l, transform, gl);
                 }

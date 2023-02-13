@@ -22,11 +22,12 @@ impl<const N: usize> Particle<N> {
         this
     }
 
-    /// Create a random particle
+    /// Return the size of the history of the particle
     fn size(&self) -> usize {
-        self.time.max(N)
+        self.time.min(N)
     }
 
+    /// Index of the next available space
     fn idx(&self) -> usize {
         (self.base + self.size()) % N
     }
@@ -34,29 +35,103 @@ impl<const N: usize> Particle<N> {
     pub fn push(&mut self, value: (f64, f64)) {
         self.data[self.idx()] = value;
         self.time += 1;
-        if self.time >= N {
+        if self.time > N {
             self.base = (self.base + 1) % N;
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &(f64, f64)> {
+    pub fn _iter(&self) -> impl Iterator<Item = &(f64, f64)> {
         self.data.iter().cycle().skip(self.base).take(self.size())
     }
 
-    pub fn nth(&self, n: usize) -> Option<(f64, f64)> {
-        if n <= self.size() {
+    pub fn at(&self, n: usize) -> Option<(f64, f64)> {
+        debug_assert!(n<N);
+        if n < self.size() {
             Some(self.data[(self.base + n) % N])
         } else {
             None
         }
     }
 
+    /// Return the last element of the history of the particle
     pub fn last(&self) -> Option<(f64, f64)> {
         if self.size() != 0 {
-            Some(self.data[self.idx() - 1])
+            Some(self.data[(self.idx() + N - 1) % N])
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod test_particle {
+    use crate::history::Particle;
+
+    #[test]
+    fn time() {
+        let mut particle = Particle::<5>::new();
+        assert_eq!(particle.time, 0);
+
+        particle.push((1.0, 1.0));
+        particle.push((2.0, 2.0));
+        particle.push((3.0, 3.0));
+        assert_eq!(particle.time, 3);
+
+        particle.push((4.0, 4.0));
+        particle.push((5.0, 5.0));
+        particle.push((6.0, 6.0));
+        assert_eq!(particle.time, 6);
+    }
+
+    #[test]
+    fn size() {
+        let mut particle = Particle::<5>::new();
+        assert_eq!(particle.size(), 0);
+
+        particle.push((1.0, 1.0));
+        particle.push((2.0, 2.0));
+        particle.push((3.0, 3.0));
+        assert_eq!(particle.size(), 3);
+
+        particle.push((4.0, 4.0));
+        particle.push((5.0, 5.0));
+        particle.push((6.0, 6.0));
+        assert_eq!(particle.size(), 5);
+    }
+
+    #[test]
+    fn last() {
+        let mut particle = Particle::<5>::new();
+        assert_eq!(particle.last(), None);
+
+        particle.push((1.0, 1.0));
+        particle.push((2.0, 2.0));
+        particle.push((3.0, 3.0));
+        assert_eq!(particle.last(), Some((3.0, 3.0)));
+
+        particle.push((4.0, 4.0));
+        particle.push((5.0, 5.0));
+        particle.push((6.0, 6.0));
+        assert_eq!(particle.last(), Some((6.0, 6.0)));
+    }
+
+    #[test]
+    fn at() {
+        let mut particle = Particle::<5>::new();
+        assert_eq!(particle.at(0), None);
+        assert_eq!(particle.at(4), None);
+
+        particle.push((1.0, 1.0));
+        particle.push((2.0, 2.0));
+        particle.push((3.0, 3.0));
+        assert_eq!(particle.at(0), Some((1.0, 1.0)));
+        assert_eq!(particle.at(4), None);
+
+        particle.push((4.0, 4.0));
+        particle.push((5.0, 5.0));
+        particle.push((6.0, 6.0));
+        assert_eq!(particle.at(0), Some((2.0, 2.0)));
+        assert_eq!(particle.at(4), Some((6.0, 6.0)));
     }
 }
 
@@ -72,13 +147,6 @@ impl<const N: usize> History<N> {
     // Insert a new particle in history with a random position
     pub fn spawn(&mut self) {
         self.data.push(Particle::<N>::random());
-    }
-
-    pub fn push(&mut self, pos: (f64, f64)) {
-        if self.data.is_empty() {
-            self.data.push(Particle::new());
-        }
-        self.data.last_mut().unwrap().push(pos);
     }
 
     /// Go the history by generation (Iterators with the same time)
@@ -110,13 +178,14 @@ impl<'a, const N: usize> Iterator for HistoryIterator<'a, N> {
                 .data
                 .iter()
                 .filter_map(
-                    |particle| match (particle.nth(self.i), particle.nth(self.i + 1)) {
+                    |particle| match (particle.at(self.i), particle.at(self.i + 1)) {
                         (Some((x0, y0)), Some((x1, y1))) => Some([x0, y0, x1, y1]),
                         _ => None,
                     },
                 )
                 .collect();
 
+            self.i += 1;
             Some(item)
         } else {
             None
