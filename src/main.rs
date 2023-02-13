@@ -82,25 +82,6 @@ impl App {
                 .scale(0.5, -0.5)
                 .trans(1.0, -1.0);
 
-            // TODO Draw from the oldest to the newest
-            // let iterators: Vec<_> = self.history
-            //     .iter()
-            //     .map(|h| h.iter().rev().windows(2).map(|w| (w[1], w[0])).fuse()).collect();
-            //
-            // loop {
-            //     let ok: bool = false;
-            //     for i in iterators {
-            //         if let Some((x0, y0), (x1, y1)) = i.next() {
-            //             ok = true;
-            //             line(RED, RADIUS, [x0, y0, x1, y1], transform, gl);
-            //         }
-            //     }
-            //     if !ok {
-            //         break;
-            //     }
-            // }
-
-            // TODO it's rendering non-valid points
             for (i, gen) in self.history.gen_iter().enumerate() {
                 println!("{}", i);
                 for l in gen {

@@ -45,7 +45,7 @@ impl<const N: usize> Particle<N> {
     }
 
     pub fn at(&self, n: usize) -> Option<(f64, f64)> {
-        debug_assert!(n<N);
+        debug_assert!(n < N);
         if n < self.size() {
             Some(self.data[(self.base + n) % N])
         } else {
@@ -64,8 +64,8 @@ impl<const N: usize> Particle<N> {
 }
 
 #[cfg(test)]
-mod test_particle {
-    use crate::history::Particle;
+mod tests_particle {
+    use super::Particle;
 
     #[test]
     fn time() {
@@ -190,5 +190,52 @@ impl<'a, const N: usize> Iterator for HistoryIterator<'a, N> {
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests_history {
+    use super::History;
+    use super::Particle;
+
+    #[test]
+    fn gen_iter() {
+        let history = {
+            let mut history = History::<5>::new();
+            let vals = [0.0, 1.0, 2.0, 3.0, 4.0];
+
+            for y in vals {
+                let mut particle = Particle::<5>::new();
+                for x in vals {
+                    particle.push((x, y))
+                }
+                history.data.push(particle)
+            }
+            history
+        };
+
+        let mut iter = history.gen_iter();
+
+        assert_eq!(
+            iter.next(),
+            Some(vec![
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 1.0, 1.0, 1.0],
+                [0.0, 2.0, 1.0, 2.0],
+                [0.0, 3.0, 1.0, 3.0],
+                [0.0, 4.0, 1.0, 4.0],
+            ])
+        );
+
+        assert_eq!(
+            iter.next(),
+            Some(vec![
+                [1.0, 0.0, 2.0, 0.0],
+                [1.0, 1.0, 2.0, 1.0],
+                [1.0, 2.0, 2.0, 2.0],
+                [1.0, 3.0, 2.0, 3.0],
+                [1.0, 4.0, 2.0, 4.0],
+            ])
+        );
     }
 }
