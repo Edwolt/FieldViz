@@ -18,7 +18,13 @@ impl<const N: usize> Particle<N> {
     /// Create a random particle
     pub fn random() -> Self {
         let mut this = Self::new();
-        this.push((random(), random()));
+        let x:f64 = random();
+        let y:f64 = random();
+
+        let x:f64 = x * 2.0 - 1.0;
+        let y:f64 = y * 2.0 - 1.0;
+
+        this.push((x, y));
         this
     }
 
