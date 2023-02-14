@@ -22,8 +22,12 @@ impl<const N: usize> Particle<N> {
         let x: f64 = random();
         let y: f64 = random();
 
-        let x: f64 = x * 2.0 - 1.0;
-        let y: f64 = y * 2.0 - 1.0;
+        let x = x * 2.0 - 1.0;
+        let y = y * 2.0 - 1.0;
+
+        // Particle can appear outside of the canvas
+        let x = x * 1.25;
+        let y = y * 1.25;
 
         this.push((x, y));
         this
