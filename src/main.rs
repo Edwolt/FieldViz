@@ -1,10 +1,11 @@
-mod history;
-
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
 extern crate palette;
 extern crate piston;
+
+mod field;
+mod history;
 
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
@@ -13,12 +14,11 @@ use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 
+use field::{Field, FIELDS};
 use history::History;
 
 const SIZE: (u32, u32) = (500, 500);
 const N: usize = 50;
-
-type Field = fn(x: f64, y: f64) -> (f64, f64);
 
 fn main() {
     // Change this to OpenGL::V2_1 if not working
@@ -31,10 +31,8 @@ fn main() {
         .build()
         .unwrap();
 
+    let field = FIELDS[0];
     // Create a new visualization and run it
-    // let field: Field = |_x, _y| (1.0, 0.0);
-    let field: Field = |x, y| (y, x);
-    // let field: Field = |x, y| (y / (x * x + y * y).sqrt(), -x / (x * x + y * y).sqrt());
     let mut app = App::new(GlGraphics::new(opengl), field);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
@@ -49,7 +47,8 @@ fn main() {
 }
 
 pub struct App {
-    field: Field,   // Field to visualize
+    field: Field, // Field to visualize
+    time: f64,
     gl: GlGraphics, // OpenGL drawing backend
     history: History<N>,
     gradient: Vec<[f32; 4]>,
@@ -71,6 +70,7 @@ impl App {
 
         App {
             field,
+            time: 0.0,
             gl,
             history,
             gradient,
@@ -108,7 +108,7 @@ impl App {
 
         for p in self.history.data_iter_mut() {
             let &(x, y) = p.last().unwrap();
-            let (dx, dy) = (self.field)(x, y);
+            let (dx, dy) = (self.field)(x, y, self.time);
             p.push((x + dx * dt, y + dy * dt));
         }
     }

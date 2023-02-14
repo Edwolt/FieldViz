@@ -19,15 +19,11 @@ impl<const N: usize> Particle<N> {
     /// Create a random particle
     pub fn random() -> Self {
         let mut this = Self::new();
-        let x: f64 = random();
-        let y: f64 = random();
 
-        let x = x * 2.0 - 1.0;
-        let y = y * 2.0 - 1.0;
-
+        let (x, y) = (random::<f64>(), random::<f64>());
+        let (x, y) = (x * 2.0 - 1.0, y * 2.0 - 1.0);
         // Particle can appear outside of the canvas
-        let x = x * 1.25;
-        let y = y * 1.25;
+        let (x, y) = (x * 1.25, y * 1.25);
 
         this.push((x, y));
         this
