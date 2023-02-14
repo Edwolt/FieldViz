@@ -58,9 +58,7 @@ pub struct App {
 impl App {
     fn new(gl: GlGraphics, field: Field) -> App {
         let mut history = History::new();
-        for _ in 0..100 {
-            history.spawn();
-        }
+        history.spawn();
 
         let red = LinSrgba::new(1.0, 0.0, 0.0, 1.0);
         let white = LinSrgba::new(1.0, 1.0, 1.0, 1.0);
@@ -104,6 +102,10 @@ impl App {
 
     fn update(&mut self, _args: &UpdateArgs) {
         let dt = _args.dt;
+
+        self.history.spawn();
+        self.history.expires(200);
+
         for p in self.history.data_iter_mut() {
             let (x, y) = p.last().unwrap();
             let (dx, dy) = (self.field)(x, y);

@@ -168,6 +168,11 @@ impl<const N: usize> History<N> {
     pub fn data_iter_mut(&mut self) -> impl Iterator<Item = &mut Particle<N>> {
         self.data.iter_mut()
     }
+
+    // Remove particles that are older than expiration_date
+    pub fn expires(&mut self, expiration_date: usize) {
+        self.data.retain(|p| p.time <= expiration_date)
+    }
 }
 
 // History Iterator
