@@ -3,10 +3,12 @@ mod history;
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
+extern crate palette;
 extern crate piston;
 
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
+use palette::{Gradient, LinSrgba, Pixel};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
@@ -14,6 +16,7 @@ use piston::window::WindowSettings;
 use history::History;
 
 const SIZE: (u32, u32) = (500, 500);
+const N: usize = 50;
 
 type Field = fn(x: f64, y: f64) -> (f64, f64);
 
@@ -30,28 +33,26 @@ fn main() {
 
     // Create a new visualization and run it
     // let field: Fiedl = |_x, _y| (1.0, 0.0);
-    let field: Field = |x, y| (y, x);
-    // let field: Field = |x, y| (y/(x*x+y*y).sqrt(), -x/(x*x+y*y).sqrt());
+    // let field: Field = |x, y| (y, x);
+    let field: Field = |x, y| (y/(x*x+y*y).sqrt(), -x/(x*x+y*y).sqrt());
     let mut app = App::new(GlGraphics::new(opengl), field);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
-        println!("render");
         if let Some(args) = e.render_args() {
             app.render(&args);
         }
 
-        println!("update");
         if let Some(args) = e.update_args() {
             app.update(&args);
         }
-        println!("ok");
     }
 }
 
 pub struct App {
     field: Field,   // Field to visualize
     gl: GlGraphics, // OpenGL drawing backend
-    history: History<50>,
+    history: History<N>,
+    gradient: Vec<[f32; 4]>,
 }
 
 impl App {
@@ -61,14 +62,25 @@ impl App {
             history.spawn();
         }
 
-        App { field, gl, history }
+        let red = LinSrgba::new(1.0, 0.0, 0.0, 1.0);
+        let white = LinSrgba::new(1.0, 1.0, 1.0, 1.0);
+
+        let gradient = Gradient::new([red, white]);
+        let gradient: Vec<[f32; 4]> = gradient
+            .take(N)
+            .map(|srgba| srgba.into_format().into_raw())
+            .collect();
+
+        App {
+            field,
+            gl,
+            history,
+            gradient,
+        }
     }
 
     fn render(&mut self, args: &RenderArgs) {
         const BACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
         const RADIUS: f64 = 0.005;
 
         self.gl.draw(args.viewport(), |c, gl| {
@@ -83,9 +95,8 @@ impl App {
                 .trans(1.0, -1.0);
 
             for (i, gen) in self.history.gen_iter().enumerate() {
-                println!("{}", i);
                 for l in gen {
-                    line(RED, RADIUS, l, transform, gl);
+                    line(self.gradient[i], RADIUS, l, transform, gl);
                 }
             }
         });
