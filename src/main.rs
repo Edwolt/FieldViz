@@ -32,9 +32,9 @@ fn main() {
         .unwrap();
 
     // Create a new visualization and run it
-    // let field: Fiedl = |_x, _y| (1.0, 0.0);
-    // let field: Field = |x, y| (y, x);
-    let field: Field = |x, y| (y / (x * x + y * y).sqrt(), -x / (x * x + y * y).sqrt());
+    // let field: Field = |_x, _y| (1.0, 0.0);
+    let field: Field = |x, y| (y, x);
+    // let field: Field = |x, y| (y / (x * x + y * y).sqrt(), -x / (x * x + y * y).sqrt());
     let mut app = App::new(GlGraphics::new(opengl), field);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
@@ -107,7 +107,7 @@ impl App {
         self.history.expires(200);
 
         for p in self.history.data_iter_mut() {
-            let (x, y) = p.last().unwrap();
+            let &(x, y) = p.last().unwrap();
             let (dx, dy) = (self.field)(x, y);
             p.push((x + dx * dt, y + dy * dt));
         }

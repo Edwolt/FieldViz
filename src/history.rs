@@ -1,18 +1,17 @@
 use rand::random;
+use std::collections::VecDeque;
 
 pub struct Particle<const N: usize> {
-    data: [(f64, f64); N],
+    data: VecDeque<(f64, f64)>,
     time: usize,
-    base: usize,
     pub expired: bool, // TODO invert logic using valid instead expired
 }
 
 impl<const N: usize> Particle<N> {
     pub fn new() -> Self {
         Self {
-            data: [(0.0, 0.0); N],
+            data: VecDeque::new(),
             time: 0,
-            base: 0,
             expired: false,
         }
     }
@@ -31,49 +30,40 @@ impl<const N: usize> Particle<N> {
     }
 
     /// Return the size of the history of the particle
-    fn size(&self) -> usize {
-        self.time.min(N)
-    }
-
-    /// Index of the next available space
-    fn idx(&self) -> usize {
-        (self.base + self.size()) % N
+    fn len(&self) -> usize {
+        return self.data.len();
     }
 
     // TODO can be transformed in update
     // Receiving the Filed function
     pub fn push(&mut self, value: (f64, f64)) {
         if !self.expired {
-            self.data[self.idx()] = value;
-            self.time += 1;
-            if self.time > N {
-                self.base = (self.base + 1) % N;
+            self.data.push_back(value);
+            if self.data.len() > N {
+                self.data.pop_front();
             }
+            self.time += 1;
         } else {
-            self.base = (self.base + 1) % N;
+            self.data.pop_front();
         }
     }
 
     pub fn _iter(&self) -> impl Iterator<Item = &(f64, f64)> {
-        self.data.iter().cycle().skip(self.base).take(self.size())
+        self.data.iter()
     }
 
     pub fn at(&self, n: usize) -> Option<(f64, f64)> {
-        debug_assert!(n < N);
-        if n < self.size() {
-            Some(self.data[(self.base + n) % N])
+        assert!(n < N);
+        if n < self.len() {
+            Some(self.data[n])
         } else {
             None
         }
     }
 
     /// Return the last element of the history of the particle
-    pub fn last(&self) -> Option<(f64, f64)> {
-        if self.size() != 0 {
-            Some(self.data[(self.idx() + N - 1) % N])
-        } else {
-            None
-        }
+    pub fn last(&self) -> Option<&(f64, f64)> {
+        self.data.back()
     }
 }
 
@@ -100,17 +90,17 @@ mod tests_particle {
     #[test]
     fn size() {
         let mut particle = Particle::<5>::new();
-        assert_eq!(particle.size(), 0);
+        assert_eq!(particle.len(), 0);
 
         particle.push((1.0, 1.0));
         particle.push((2.0, 2.0));
         particle.push((3.0, 3.0));
-        assert_eq!(particle.size(), 3);
+        assert_eq!(particle.len(), 3);
 
         particle.push((4.0, 4.0));
         particle.push((5.0, 5.0));
         particle.push((6.0, 6.0));
-        assert_eq!(particle.size(), 5);
+        assert_eq!(particle.len(), 5);
     }
 
     #[test]
@@ -121,12 +111,12 @@ mod tests_particle {
         particle.push((1.0, 1.0));
         particle.push((2.0, 2.0));
         particle.push((3.0, 3.0));
-        assert_eq!(particle.last(), Some((3.0, 3.0)));
+        assert_eq!(particle.last(), Some(&(3.0, 3.0)));
 
         particle.push((4.0, 4.0));
         particle.push((5.0, 5.0));
         particle.push((6.0, 6.0));
-        assert_eq!(particle.last(), Some((6.0, 6.0)));
+        assert_eq!(particle.last(), Some(&(6.0, 6.0)));
     }
 
     #[test]
@@ -185,7 +175,7 @@ impl<const N: usize> History<N> {
             }
         });
 
-        self.data.retain(|p| !(p.expired && p.size() == 0))
+        self.data.retain(|p| !(p.expired && p.len() == 0))
     }
 }
 
