@@ -4,6 +4,7 @@ pub struct Particle<const N: usize> {
     data: [(f64, f64); N],
     time: usize,
     base: usize,
+    pub expired: bool, // TODO invert logic using valid instead expired
 }
 
 impl<const N: usize> Particle<N> {
@@ -12,6 +13,7 @@ impl<const N: usize> Particle<N> {
             data: [(0.0, 0.0); N],
             time: 0,
             base: 0,
+            expired: false,
         }
     }
 
@@ -38,10 +40,16 @@ impl<const N: usize> Particle<N> {
         (self.base + self.size()) % N
     }
 
+    // TODO can be transformed in update
+    // Receiving the Filed function
     pub fn push(&mut self, value: (f64, f64)) {
-        self.data[self.idx()] = value;
-        self.time += 1;
-        if self.time > N {
+        if !self.expired {
+            self.data[self.idx()] = value;
+            self.time += 1;
+            if self.time > N {
+                self.base = (self.base + 1) % N;
+            }
+        } else {
             self.base = (self.base + 1) % N;
         }
     }
@@ -171,7 +179,13 @@ impl<const N: usize> History<N> {
 
     // Remove particles that are older than expiration_date
     pub fn expires(&mut self, expiration_date: usize) {
-        self.data.retain(|p| p.time <= expiration_date)
+        self.data.iter_mut().for_each(|i| {
+            if i.time > expiration_date {
+                i.expired = true;
+            }
+        });
+
+        self.data.retain(|p| !(p.expired && p.size() == 0))
     }
 }
 

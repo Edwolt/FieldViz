@@ -34,7 +34,7 @@ fn main() {
     // Create a new visualization and run it
     // let field: Fiedl = |_x, _y| (1.0, 0.0);
     // let field: Field = |x, y| (y, x);
-    let field: Field = |x, y| (y/(x*x+y*y).sqrt(), -x/(x*x+y*y).sqrt());
+    let field: Field = |x, y| (y / (x * x + y * y).sqrt(), -x / (x * x + y * y).sqrt());
     let mut app = App::new(GlGraphics::new(opengl), field);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
