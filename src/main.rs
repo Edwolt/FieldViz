@@ -11,7 +11,7 @@ use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
 use palette::{Gradient, LinSrgba, Pixel};
 use piston::event_loop::{EventSettings, Events};
-use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
+use piston::input::{ButtonEvent, RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 
 use field::{Field, FIELDS};
@@ -31,9 +31,9 @@ fn main() {
         .build()
         .unwrap();
 
-    let field = FIELDS[0];
+    let mut field_idx: usize = 0;
     // Create a new visualization and run it
-    let mut app = App::new(GlGraphics::new(opengl), field);
+    let mut app = App::new(GlGraphics::new(opengl), FIELDS[field_idx]);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
@@ -43,10 +43,32 @@ fn main() {
         if let Some(args) = e.update_args() {
             app.update(&args);
         }
+
+        if let Some(args) = e.button_args() {
+            use piston::input::Button::Keyboard;
+            use piston::keyboard::Key;
+            use piston::ButtonState;
+
+            if args.state == ButtonState::Release {
+                if let Keyboard(key) = args.button {
+                    match key {
+                        Key::Right => {
+                            field_idx = (field_idx + 1) % FIELDS.len();
+                            app = app.renew(FIELDS[field_idx]);
+                        }
+                        Key::Left => {
+                            field_idx = (field_idx + FIELDS.len() - 1) % FIELDS.len();
+                            app = app.renew(FIELDS[field_idx]);
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
     }
 }
 
-pub struct App {
+struct App {
     field: Field, // Field to visualize
     time: f64,
     gl: GlGraphics, // OpenGL drawing backend
@@ -55,7 +77,7 @@ pub struct App {
 }
 
 impl App {
-    fn new(gl: GlGraphics, field: Field) -> App {
+    fn new(gl: GlGraphics, field: Field) -> Self {
         let mut history = History::new();
         history.spawn();
 
@@ -68,12 +90,22 @@ impl App {
             .map(|srgba| srgba.into_format().into_raw())
             .collect();
 
-        App {
+        Self {
             field,
             time: 0.0,
             gl,
             history,
             gradient,
+        }
+    }
+
+    fn renew(self, field: Field) -> Self {
+        Self {
+            field,
+            time: 0.0,
+            gl: self.gl,
+            history: History::new(),
+            gradient: self.gradient,
         }
     }
 
@@ -100,8 +132,8 @@ impl App {
         });
     }
 
-    fn update(&mut self, _args: &UpdateArgs) {
-        let dt = _args.dt;
+    fn update(&mut self, args: &UpdateArgs) {
+        let dt = args.dt;
 
         self.history.spawn();
         self.history.expires(200);
