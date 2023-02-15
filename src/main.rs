@@ -143,5 +143,6 @@ impl App {
             let (dx, dy) = (self.field)(x, y, self.time);
             p.push((x + dx * dt, y + dy * dt));
         }
+        self.time += dt;
     }
 }
