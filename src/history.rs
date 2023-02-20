@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 
 pub struct Particle<const N: usize> {
     data: VecDeque<(f64, f64)>,
-    time: usize,
+    time: u32,
     pub expired: bool, // TODO invert logic using valid instead expired
 }
 
@@ -168,7 +168,7 @@ impl<const N: usize> History<N> {
     }
 
     // Remove particles that are older than expiration_date
-    pub fn expires(&mut self, expiration_date: usize) {
+    pub fn expires(&mut self, expiration_date: u32) {
         self.data.iter_mut().for_each(|i| {
             if i.time > expiration_date {
                 i.expired = true;

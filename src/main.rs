@@ -21,7 +21,6 @@ const SIZE: (u32, u32) = (500, 500);
 const N: usize = 50;
 
 fn main() {
-    // Change this to OpenGL::V2_1 if not working
     let opengl = OpenGL::V3_2;
 
     // Create a Glutin window
@@ -32,6 +31,7 @@ fn main() {
         .unwrap();
 
     let mut field_idx: usize = 0;
+
     // Create a new visualization and run it
     let mut app = App::new(GlGraphics::new(opengl), FIELDS[field_idx]);
     let mut events = Events::new(EventSettings::new());
@@ -69,9 +69,12 @@ fn main() {
 }
 
 struct App {
-    field: Field, // Field to visualize
+    /// Field to visualize
+    field: Field,
     time: f64,
-    gl: GlGraphics, // OpenGL drawing backend
+
+    /// OpenGL drawing backend
+    gl: GlGraphics,
     history: History<N>,
     gradient: Vec<[f32; 4]>,
 }
@@ -111,7 +114,7 @@ impl App {
 
     fn render(&mut self, args: &RenderArgs) {
         const BACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-        const RADIUS: f64 = 0.005;
+        const RADIUS: f64 = 0.002;
 
         self.gl.draw(args.viewport(), |c, gl| {
             use graphics::*;
@@ -133,10 +136,13 @@ impl App {
     }
 
     fn update(&mut self, args: &UpdateArgs) {
+        const NUMBER_OF_SPAWNS: usize = 5;
+        const EXPIRATION_DATE: u32 = 200;
+
         let dt = args.dt;
 
-        self.history.spawn();
-        self.history.expires(200);
+        (0..NUMBER_OF_SPAWNS).for_each(|_| self.history.spawn());
+        self.history.expires(EXPIRATION_DATE);
 
         for p in self.history.data_iter_mut() {
             let &(x, y) = p.last().unwrap();
