@@ -1,6 +1,6 @@
 use opengl_graphics::GlGraphics;
 use palette::{Gradient, LinSrgba, Pixel};
-use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
+use piston::input::{RenderArgs, RenderEvent, UpdateEvent};
 use piston::Event;
 
 use crate::field::Field;
@@ -67,7 +67,6 @@ impl<const HISTORY_LEN: usize> App<HISTORY_LEN> {
                 .trans(width / 2.0, height / 2.0)
                 .scale(side, side)
                 .scale(0.5, -0.5);
-            //.trans(1.0, -1.0);
 
             for (i, gen) in self.history.gen_iter().enumerate() {
                 for l in gen {
@@ -77,11 +76,9 @@ impl<const HISTORY_LEN: usize> App<HISTORY_LEN> {
         });
     }
 
-    fn update(&mut self, args: &UpdateArgs) {
+    fn update(&mut self, dt: f64) {
         const NUMBER_OF_SPAWNS: usize = 10;
         const EXPIRATION_DATE: u32 = 150;
-
-        let dt = args.dt;
 
         (0..NUMBER_OF_SPAWNS).for_each(|_| self.history.spawn());
         self.history.expires(EXPIRATION_DATE);
@@ -100,7 +97,8 @@ impl<const HISTORY_LEN: usize> App<HISTORY_LEN> {
         }
 
         if let Some(args) = event.update_args() {
-            self.update(&args);
+            let dt = args.dt;
+            self.update(dt);
         }
     }
 }
