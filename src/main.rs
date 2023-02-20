@@ -13,6 +13,7 @@ use palette::{Gradient, LinSrgba, Pixel};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{ButtonEvent, RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
+use piston::Event;
 
 use field::{Field, FIELDS};
 use history::History;
@@ -23,27 +24,19 @@ const N: usize = 50;
 fn main() {
     let opengl = OpenGL::V3_2;
 
-    // Create a Glutin window
+    // Glutin window
     let mut window: Window = WindowSettings::new("visualization", SIZE)
         .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
 
-    let mut field_idx: usize = 0;
-
     // Create a new visualization and run it
+    let mut field_idx: usize = 0;
     let mut app = App::new(GlGraphics::new(opengl), FIELDS[field_idx]);
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
-        if let Some(args) = e.render_args() {
-            app.render(&args);
-        }
-
-        if let Some(args) = e.update_args() {
-            app.update(&args);
-        }
-
+        // Change field being visualized
         if let Some(args) = e.button_args() {
             use piston::input::Button::Keyboard;
             use piston::keyboard::Key;
@@ -65,6 +58,9 @@ fn main() {
                 }
             }
         }
+
+        // Hangle event
+        app.handle_envent(&e);
     }
 }
 
@@ -116,6 +112,7 @@ impl App {
         const BACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const RADIUS: f64 = 0.002;
 
+        println!("{:?}", args);
         self.gl.draw(args.viewport(), |c, gl| {
             use graphics::*;
             // Clear the screen
@@ -150,5 +147,15 @@ impl App {
             p.push((x + dx * dt, y + dy * dt));
         }
         self.time += dt;
+    }
+
+    fn handle_envent(&mut self, event: &Event) {
+        if let Some(args) = event.render_args() {
+            self.render(&args);
+        }
+
+        if let Some(args) = event.update_args() {
+            self.update(&args);
+        }
     }
 }
