@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 pub struct Particle<const N: usize> {
     data: VecDeque<(f64, f64)>,
     time: u32,
-    pub expired: bool, // TODO invert logic using valid instead expired
+    pub valid: bool, 
 }
 
 impl<const N: usize> Particle<N> {
@@ -12,7 +12,7 @@ impl<const N: usize> Particle<N> {
         Self {
             data: VecDeque::new(),
             time: 0,
-            expired: false,
+            valid: true,
         }
     }
 
@@ -37,7 +37,7 @@ impl<const N: usize> Particle<N> {
     // TODO can be transformed in update
     // Receiving the Filed function
     pub fn push(&mut self, value: (f64, f64)) {
-        if !self.expired {
+        if self.valid {
             self.data.push_back(value);
             if self.data.len() > N {
                 self.data.pop_front();
@@ -171,11 +171,11 @@ impl<const N: usize> History<N> {
     pub fn expires(&mut self, expiration_date: u32) {
         self.data.iter_mut().for_each(|i| {
             if i.time > expiration_date {
-                i.expired = true;
+                i.valid = false;
             }
         });
 
-        self.data.retain(|p| !(p.expired && p.len() == 0))
+        self.data.retain(|p| p.valid && p.len() != 0);
     }
 }
 
