@@ -137,8 +137,8 @@ impl App {
     }
 
     fn update(&mut self, args: &UpdateArgs) {
-        const NUMBER_OF_SPAWNS: usize = 5;
-        const EXPIRATION_DATE: u32 = 200;
+        const NUMBER_OF_SPAWNS: usize = 10;
+        const EXPIRATION_DATE: u32 = 150;
 
         let dt = args.dt;
 
