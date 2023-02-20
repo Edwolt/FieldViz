@@ -24,17 +24,18 @@ const N: usize = 50;
 fn main() {
     let opengl = OpenGL::V3_2;
 
-    // Glutin window
+    // Create a new visualization
     let mut window: Window = WindowSettings::new("visualization", SIZE)
         .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
 
-    // Create a new visualization and run it
     let mut field_idx: usize = 0;
     let mut app = App::new(GlGraphics::new(opengl), FIELDS[field_idx]);
     let mut events = Events::new(EventSettings::new());
+
+    // Run visualization
     while let Some(e) = events.next(&mut window) {
         // Change field being visualized
         if let Some(args) = e.button_args() {
@@ -112,7 +113,9 @@ impl App {
         const BACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const RADIUS: f64 = 0.002;
 
-        println!("{:?}", args);
+        let [width, height] = args.window_size;
+        let side = width.max(height);
+
         self.gl.draw(args.viewport(), |c, gl| {
             use graphics::*;
             // Clear the screen
@@ -120,9 +123,10 @@ impl App {
 
             let transform = c
                 .transform
-                .scale(SIZE.0 as f64, SIZE.1 as f64)
-                .scale(0.5, -0.5)
-                .trans(1.0, -1.0);
+                .trans(width/2.0, height/2.0)
+                .scale(side, side)
+                .scale(0.5,-0.5);
+                //.trans(1.0, -1.0);
 
             for (i, gen) in self.history.gen_iter().enumerate() {
                 for l in gen {
