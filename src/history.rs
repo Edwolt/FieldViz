@@ -175,7 +175,7 @@ impl<const N: usize> History<N> {
             }
         });
 
-        self.data.retain(|p| p.valid && p.len() != 0);
+        self.data.retain(|p| p.valid || p.len() != 0);
     }
 }
 
