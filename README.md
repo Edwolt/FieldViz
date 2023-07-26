@@ -26,12 +26,12 @@ The first two parameters is the position in field,
 and the last parameter is the time from the start of the vizualization,
 so it's possible to make field varying by time
 ```math
-F(x, y, t) = (x, y)
+\vec{F}(x, y, t) = (x, y)
 ```
 
 # Example
-* `F(x, y) = (y, x)`:
+* $\vec{F}(x, y) = (y, x)$:
 ![Field F(x, y) = (y, x)](images/yx_field.png)
 
-* `F(x, y) = (y / sqrt(x * x + y * y), -x / sqrt(x * x + y * y))`
-![Field F(x, y) = (y, x)](images/circle_field.png)
+* $\vec{F}(x, y) = (\frac{y}{\sqrt{x^2 + y^2}}, -\frac{x}{\sqrt{x^2 + y^2}})$
+![Field Circle](images/circle_field.png)
