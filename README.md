@@ -31,7 +31,9 @@ so it's possible to make field varying by time
 
 # Example
 * $\vec{F}(x, y) = (y, x)$:
+
 ![Field F(x, y) = (y, x)](images/yx_field.png)
 
 * $\vec{F}(x, y) = (\frac{y}{\sqrt{x^2 + y^2}}, -\frac{x}{\sqrt{x^2 + y^2}})$
+
 ![Field Circle](images/circle_field.png)
